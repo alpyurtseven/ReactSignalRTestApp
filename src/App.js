@@ -4,61 +4,75 @@ import './App.css';
 const signalR = require("@microsoft/signalr");
 let connection;
 
-const Connect = (token) =>{
+const connect = (token) =>{
   console.warn('TOKEN --- ', token);
 
-  connection = new signalR.HubConnectionBuilder().withUrl("https://api.roomie.helloworldeducation.com/chat", {
+  connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:7032/chat", {
     accessTokenFactory: ()=> token
   }).build();
 
 connection.start().then(function () {
     console.log("SignalR ile bağlantı kuruldu.");
 
-    OnUserConnected();
-    OnError();
-    OnNewMessage();
-    OnPreviousMessages();
+    onConnected();
+    onError();
+    onNewMessage();
+    onUserChats();
+    onPreviousMessages();
 
   }).catch(function (err) {
       return console.error(err.toString());
   });
+
+  window.connection = connection;
 }
 
-const SendPrivate = (recieverName = 'roomie.test2', message = 'TEST FROM REACT APP') => {
-
+const sendPrivate = (recieverName = 'roomie.test.user', message = 'TEST FROM REACT APP') => {
   console.log("RecieverName", recieverName);
   connection.invoke("SendPrivate", recieverName, message).catch(function (err) {
     return console.error(err.toString());
   });
 }
 
-const GetMessages = () => {
-  connection.invoke("GetMessages").catch(function (err) {
+const getChats = () =>{
+  connection.invoke("GetChats").catch(function (err) {
     return console.error(err.toString());
   });
 }
 
-const OnUserConnected = () => {
-  connection.on("userConnected", (userList) => {
+const getMessagesByChat = (id) => {
+  connection.invoke("GetMessagesByChat", Number(id)).catch(function (err) {
+    return console.error(err.toString());
+  });
+}
+
+const onConnected = () => {
+  connection.on("Connected", (userList) => {
     console.log("ConnectedUserList", userList);
   });
 }
 
-const OnError = () => {
-  connection.on("onError", (errorMessage) => {
-    console.log(errorMessage);
+const onError = () => {
+  connection.on("Error", (status, message) => {
+    console.log("ERROR FROM HUB: ",message);
   });
 }
 
-const OnNewMessage = () => {
-  connection.on("newMessage", (messagesObject) => {
+const onNewMessage = () => {
+  connection.on("NewMessage", (messagesObject) => {
     console.log("New Message --- ",  messagesObject);
   });
 }
 
-const OnPreviousMessages = () => {
-  connection.on("previousMessages", (messagesObject) => {
-    console.log('PREVIOUS MESSAGES ----- ', messagesObject);
+const onUserChats = () => {
+  connection.on("UserChats", (messagesObject) => {
+    console.log('USER CHATS ----- ', messagesObject);
+  });
+}
+
+const onPreviousMessages= () => {
+  connection.on("PreviousMessages", (messagesObject) => {
+    console.log('Previous Messages ----- ', messagesObject);
   });
 }
 
@@ -69,14 +83,18 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
 
-        <button className='sendPrivate'  onClick={()=>{SendPrivate()}}>
+        <button className='sendPrivate'  onClick={()=>{sendPrivate()}}>
           Send Private
         </button>
-        <button className='getMessages'  onClick={()=>{GetMessages()}}>
+        <button className='getChats'  onClick={()=>{getChats()}}>
+          Get Chats
+        </button>
+        <button className='getMessagesByChat'  onClick={()=>{getMessagesByChat(document.querySelector('input').value)}}>
           Get Messages
         </button>
+        <input type='text' name='chatId' placeholder='ChatId'></input>
         <input type='text' name='authToken' placeholder='Token'></input>
-        <button className='connectToChat'  onClick={()=>{Connect(document.querySelector('input').value)}}>
+        <button className='connectToChat'  onClick={()=>{connect(document.getElementsByName('authToken')[0].value)}}>
           Connect
         </button>
       </header>
