@@ -7,7 +7,7 @@ let connection;
 const connect = (token) =>{
   console.warn('TOKEN --- ', token);
 
-  connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:7032/chat", {
+  connection = new signalR.HubConnectionBuilder().withUrl("https://api.roomieroster.com/chat", {
     accessTokenFactory: ()=> token
   }).build();
 
@@ -27,7 +27,7 @@ connection.start().then(function () {
   window.connection = connection;
 }
 
-const sendPrivate = (recieverName = 'roomie.test.user', message = 'TEST FROM REACT APP') => {
+const sendPrivate = (recieverName = 'alp.yurtseven', message = 'TEST FROM REACT APP') => {
   console.log("RecieverName", recieverName);
   connection.invoke("SendPrivate", recieverName, message).catch(function (err) {
     return console.error(err.toString());
